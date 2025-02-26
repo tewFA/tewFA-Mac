@@ -1,8 +1,7 @@
 # tewFA for macOS
 2FA for everyone - on Mac!
 
-<img width="865" alt="Enter password" src="https://github.com/user-attachments/assets/ceb0f843-1ac7-4079-9630-7a851bcd9ca2" />
-<img width="848" alt="Main UI" src="https://github.com/user-attachments/assets/4c36eae7-aad5-4a4e-a9ab-899ded1bf342" />
+<img width="603" alt="SCR-20250226-jxyy" src="https://github.com/user-attachments/assets/eb942cd3-cbc8-4feb-8fab-b1a7abfba0cc" />
 
 ### Important info
 Exporting your tokens is not possible in this version due to limitations. It's suggested to simply create your tokens on the web version and import them to Mac for use everywhere.
