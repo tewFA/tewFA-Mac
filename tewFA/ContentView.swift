@@ -2,60 +2,85 @@ import SwiftUI
 import WebKit
 
 struct ContentView: View {
+    @State private var webView = WKWebView()
+    @StateObject private var timerManager = TimerManager()
+        
     var body: some View {
-        WebView(urlString: "https://tewfa.pages.dev/")
-            .background(VisualEffectView(material: .sidebar, blendingMode: .behindWindow))
-            .edgesIgnoringSafeArea(.all)
+        WebView(urlString: "https://tewfa.pages.dev/", webView: webView)
+            .onAppear() {
+                timerManager.start2FATimer()
+            }
+            .background(VisualEffectView(material: .sidebar, blendingMode: .behindWindow).ignoresSafeArea())
+            .toolbar() {
+                ToolbarItem {
+                    Button(action: {
+                        executeJavaScript("show('add-token-modal')")
+                    }) {
+                        Image(systemName: "plus")
+                            .font(.title)
+                    }
+                }
+
+                ToolbarItem {
+                    Button(action: {
+                        executeJavaScript("openSettings()")
+                    }) {
+                        Image(systemName: "gear")
+                            .font(.title)
+                    }
+                }
+            }
+    }
+
+    // Function to execute JavaScript inside the WebView
+    private func executeJavaScript(_ script: String) {
+        webView.evaluateJavaScript(script, completionHandler: { result, error in
+            if let error = error {
+                print("JavaScript execution error: \(error)")
+            }
+        })
     }
 }
 
 struct WebView: NSViewRepresentable {
-    let urlString: String
+    class WebViewCoordinator: NSObject, WKNavigationDelegate {
+        var parent: WebView
+
+        init(parent: WebView) {
+            self.parent = parent
+        }
+
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            print("WebView finished loading, executing JavaScript...")
+            parent.webView.evaluateJavaScript("setupClient()", completionHandler: { result, error in
+                if let error = error {
+                    print("JavaScript execution error after load: \(error)")
+                }
+            })
+        }
+    }
     
+    let urlString: String
+    let webView: WKWebView
+
     func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
         let userContentController = WKUserContentController()
         
-        // CSS Injection
-        let cssInjectionScript = WKUserScript(
-            source: """
-            (function() {
-                var style = document.createElement('style');
-                style.innerHTML = `
-                    body {
-                        background: transparent;
-                    }
-            
-                    #passcode-setup-screen, #passcode-lock-screen, #add-token-form {
-                        background: transparent;
-                    }
-            
-                    #export-button {
-                        display: none;
-                    }
-                `;
-                document.head.appendChild(style);
-            })();
-            """,
-            injectionTime: .atDocumentEnd,
-            forMainFrameOnly: true
-        )
-        
-        userContentController.addUserScript(cssInjectionScript)
         config.userContentController = userContentController
         
-        let webView = WKWebView(frame: .zero, configuration: config)
-        
-        // Configure WebView appearance
         webView.setValue(false, forKey: "drawsBackground")
-        
-        if let url = URL(string: urlString) {
-            webView.load(URLRequest(url: url))
-        }
-        
+        webView.configuration.userContentController = userContentController
+        webView.navigationDelegate = context.coordinator
+        webView.load(URLRequest(url: URL(string: urlString)!))
+
         return webView
     }
     
+    func makeCoordinator() -> WebViewCoordinator {
+        return WebViewCoordinator(parent: self)
+    }
+
     func updateNSView(_ nsView: WKWebView, context: Context) {}
 }
 

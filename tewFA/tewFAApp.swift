@@ -12,10 +12,23 @@ struct tewFAApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-//                .background(VisualEffectView(material: .sidebar, blendingMode: .withinWindow))
-                .frame(minWidth: 800, minHeight: 500)
+                .onAppear {
+                    if let window = NSApplication.shared.windows.first {
+                        window.titlebarAppearsTransparent = true
+                        window.isOpaque = false
+                        window.backgroundColor = .clear // Set the background color to clear
+                        window.styleMask.insert(.fullSizeContentView)
+                    }
+                }
+                .frame(minWidth: 550, minHeight: 350)
         }
-        .windowStyle(HiddenTitleBarWindowStyle())
+        .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("About tewFA") {
+                    AboutWindowController.shared.showAboutView()
+                }
+            }
+        }
         .defaultSize(CGSize(width: 1024, height: 768))
     }
 }
